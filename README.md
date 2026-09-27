@@ -79,15 +79,13 @@ All email endpoints require the Google session cookie. Scheduling accepts up to 
 
 ## Deploy to Render
 
-The repository includes a [`render.yaml`](render.yaml) Blueprint for the API, static frontend, PostgreSQL, and persistent Redis-compatible Key Value service. It deploys the API as an always-on Node web service because the BullMQ worker must remain running. The managed PostgreSQL, Redis-compatible storage, and always-on API use paid plans; Render's free Key Value plan has no persistence and is not suitable for this queue.
+The repository includes a [`render.yaml`](render.yaml) Blueprint for a no-cost demo of the API, static frontend, PostgreSQL, and Redis-compatible Key Value service. All Render compute and datastore plans in this Blueprint are Free. This is for preview/demo use only and does **not** preserve the production scheduling guarantees described above.
 
 1. Push the repository to a Git provider supported by Render, then create a Blueprint from its root `render.yaml`.
 2. Enter `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` when prompted. The Blueprint generates `SESSION_SECRET` and connects the app to its database and Key Value service.
-3. Add custom domains under the same registered domain, for example `app.example.com` for the static site and `api.example.com` for the API. This matters because the session cookie uses `SameSite=Lax`.
-4. In the Render dashboard, set the API's `FRONTEND_URL` to `https://app.example.com` and `GOOGLE_CALLBACK_URL` to `https://api.example.com/api/auth/google/callback`. Set the static site's `VITE_API_URL` to `https://api.example.com`, then redeploy both services.
-5. In Google Cloud Console, set the authorized JavaScript origin to `https://app.example.com` and the redirect URI to `https://api.example.com/api/auth/google/callback`.
+3. In Google Cloud Console, add the Render frontend URL as an authorized JavaScript origin and the API URL plus `/api/auth/google/callback` as an authorized redirect URI. The Blueprint wires the service URLs between its resources.
 6. Optionally set `SMTP_SENDERS_JSON` on the API service. Otherwise, it creates an Ethereal test account and persists the credentials in Key Value. Ethereal is for previews only, not real inbox delivery.
 
-The Blueprint links `VITE_API_URL` and the initial `FRONTEND_URL` to Render's generated service URLs. Replace them with your custom-domain URLs as above before using Google sign-in. The API derives its initial callback from Render's generated URL; explicitly set `GOOGLE_CALLBACK_URL` to the custom API URL for production.
+The Blueprint links `VITE_API_URL` and `FRONTEND_URL` to Render's generated service URLs. The API derives its callback URL from Render's generated API URL. If you later add custom domains, update the frontend origin and OAuth redirect URI in both Render and Google Cloud Console.
 
-After deployment, verify `https://api.example.com/api/health`. Check the API service logs for startup and queue recovery messages. Creating the Blueprint requires a connected Render account, and the API, PostgreSQL, and persistent Key Value plans incur provider charges.
+Free-plan limitations: the API sleeps after 15 minutes without inbound traffic, so a queued email can be delayed until it wakes; free Postgres expires after 30 days; free Key Value is in-memory and loses queue data on restart; and Render blocks outbound SMTP ports 25, 465, and 587 on free web services. Therefore this setup is not suitable for reliable scheduled email delivery. Review Render's current plan limits before creating the Blueprint. After deployment, verify the API's `/api/health` endpoint and check the worker logs.

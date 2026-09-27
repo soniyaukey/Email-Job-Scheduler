@@ -3,7 +3,7 @@ services:
     name: reachinbox-api
     runtime: node
     region: oregon
-    plan: 0.5c-512mb
+    plan: free
     buildCommand: npm ci && npm run build:server
     startCommand: npm run start --workspace server
     healthCheckPath: /api/health
@@ -43,9 +43,9 @@ services:
   - type: keyvalue
     name: reachinbox-redis
     region: oregon
-    plan: 256mb
+    plan: free
     maxmemoryPolicy: noeviction
-    persistenceMode: journal-snapshot
+    persistenceMode: off
     ipAllowList: []
 
   - type: web
@@ -67,5 +67,5 @@ databases:
     databaseName: reachinbox
     user: reachinbox
     region: oregon
-    plan: 0.5c-1g
+    plan: free
     postgresMajorVersion: "16"
