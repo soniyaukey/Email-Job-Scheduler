@@ -1,0 +1,71 @@
+services:
+  - type: web
+    name: reachinbox-api
+    runtime: node
+    region: oregon
+    plan: 0.5c-512mb
+    buildCommand: npm ci && npm run build:server
+    startCommand: npm run start --workspace server
+    healthCheckPath: /api/health
+    maxShutdownDelaySeconds: 120
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22.17.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: reachinbox-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: reachinbox-redis
+          property: connectionString
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: reachinbox-frontend
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: WORKER_CONCURRENCY
+        value: "8"
+      - key: MIN_SEND_DELAY_MS
+        value: "2000"
+      - key: MAX_EMAILS_PER_HOUR_PER_SENDER
+        value: "200"
+
+  - type: keyvalue
+    name: reachinbox-redis
+    region: oregon
+    plan: 256mb
+    maxmemoryPolicy: noeviction
+    persistenceMode: journal-snapshot
+    ipAllowList: []
+
+  - type: web
+    name: reachinbox-frontend
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22.17.0
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: reachinbox-api
+          envVarKey: RENDER_EXTERNAL_URL
+
+databases:
+  - name: reachinbox-db
+    databaseName: reachinbox
+    user: reachinbox
+    region: oregon
+    plan: 0.5c-1g
+    postgresMajorVersion: "16"
