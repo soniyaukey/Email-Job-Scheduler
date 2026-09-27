@@ -89,3 +89,6 @@ The repository includes a [`render.yaml`](render.yaml) Blueprint for a no-cost d
 The Blueprint links `VITE_API_URL` and `FRONTEND_URL` to Render's generated service URLs. The API derives its callback URL from Render's generated API URL. If you later add custom domains, update the frontend origin and OAuth redirect URI in both Render and Google Cloud Console.
 
 Free-plan limitations: the API sleeps after 15 minutes without inbound traffic, so a queued email can be delayed until it wakes; free Postgres expires after 30 days; free Key Value is in-memory and loses queue data on restart; and Render blocks outbound SMTP ports 25, 465, and 587 on free web services. Therefore this setup is not suitable for reliable scheduled email delivery. Review Render's current plan limits before creating the Blueprint. After deployment, verify the API's `/api/health` endpoint and check the worker logs.
+
+Dashboard: reachinbox-frontend-ltma.onrender.com
+API health check: reachinbox-api-vrsz.onrender.com/api/health returned HTTP 200.
