@@ -67,6 +67,19 @@ async function main() {
   app.use(cors({ origin: config.FRONTEND_URL, credentials: true }))
   app.use(express.json({ limit: '2mb' }))
   app.use(cookieParser())
+  app.get('/', (_req, res) => {
+    res.json({
+      service: 'ReachInbox Email Scheduler API',
+      status: 'ok',
+      oauthConfigured: Boolean(config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET),
+      endpoints: {
+        health: '/api/health',
+        googleSignIn: '/api/auth/google',
+        currentUser: '/api/auth/me',
+        emails: '/api/emails',
+      },
+    })
+  })
   app.get('/api/health', (_req, res) => res.json({ ok: true }))
   app.use('/api/auth', authRouter)
   app.use('/api/emails', requireAuth, emailRouter)
