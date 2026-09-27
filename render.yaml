@@ -4,7 +4,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm ci && npm run build:server
+    buildCommand: npm ci --include=dev && npm run build:server
     startCommand: npm run start --workspace server
     healthCheckPath: /api/health
     envVars:
@@ -50,7 +50,7 @@ services:
   - type: web
     name: reachinbox-frontend
     runtime: static
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     staticPublishPath: ./dist
     envVars:
       - key: NODE_VERSION
