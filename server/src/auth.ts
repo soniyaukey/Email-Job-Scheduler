@@ -19,7 +19,7 @@ const oauthClient = new OAuth2Client(
 )
 const cookieOptions = {
   httpOnly: true,
-  sameSite: 'lax' as const,
+  sameSite: config.NODE_ENV === 'production' ? 'none' as const : 'lax' as const,
   secure: config.NODE_ENV === 'production',
   path: '/',
 }
