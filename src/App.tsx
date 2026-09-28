@@ -41,7 +41,29 @@ function displayDate(value?: string | null) {
 }
 
 function findEmails(text: string) {
-  return [...new Set(text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? [])]
+  return [...new Set((text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) ?? []).map((email) => email.toLowerCase()))]
+}
+
+async function readLeadFile(file: File) {
+  const bytes = new Uint8Array(await file.arrayBuffer())
+  let encoding = 'utf-8'
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) encoding = 'utf-16le'
+  else if (bytes[0] === 0xfe && bytes[1] === 0xff) encoding = 'utf-16be'
+  else {
+    const sample = bytes.subarray(0, Math.min(bytes.length, 4096))
+    let evenNulls = 0
+    let oddNulls = 0
+    for (let index = 0; index < sample.length; index += 1) {
+      if (sample[index] === 0) {
+        if (index % 2 === 0) evenNulls += 1
+        else oddNulls += 1
+      }
+    }
+    const pairs = Math.floor(sample.length / 2)
+    if (pairs > 0 && oddNulls / pairs > 0.2) encoding = 'utf-16le'
+    else if (pairs > 0 && evenNulls / pairs > 0.2) encoding = 'utf-16be'
+  }
+  return new TextDecoder(encoding).decode(bytes).replace(/^\uFEFF/, '').replaceAll('\u0000', '')
 }
 
 function App() {
@@ -115,14 +137,14 @@ function App() {
     const file = event.target.files?.[0]
     if (!file) return
     setLeadName(file.name)
-    setLeadFile(await file.text())
+    setLeadFile(await readLeadFile(file))
   }
 
   const handleSchedule = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const recipients = findEmails(leadFile)
     if (recipients.length === 0) {
-      setNotice('No email addresses found. Add a CSV or text file with lead emails.')
+      setNotice('No email addresses found. Make sure the CSV or text file contains addresses like name@example.com.')
       return
     }
     if (!startsAt) {
